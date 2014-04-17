@@ -5,6 +5,7 @@ Octopress官方已经提供三种方法来部署博客,Github Pages、Heroku 和
 **推荐一些扩展阅读:**
 
 >[Pro Git](http://git-scm.com/book/zh/) \[墙\]
+
 >[Pro Git on Github](https://github.com/progit/progit)
 
 ###安装 Git###
