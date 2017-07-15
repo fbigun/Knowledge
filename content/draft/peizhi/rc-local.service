@@ -1,0 +1,17 @@
+# this is systemd script
+# path /usr/lib/systemd/system/rc-local.service
+
+
+[Unit]
+Description=/etc/rc.d/rc.local Compatibility
+After=network.target
+ 
+[Service]
+Type=forking
+ExecStart=/etc/rc.d/rc.local start
+TimeoutSec=0
+RemainAfterExit=yes
+SysVStartPriority=99
+
+[Install]
+WantedBy=multi-user.target

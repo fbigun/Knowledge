@@ -1,0 +1,202 @@
+Python 中使用SQlite 数据库导论
+Python 3.1 提供了使用 SQlite 数据库 的基础模块。
+
+一、导入SQLite 模块
+
+from sqlite3 import dbapi2
+
+二、打开与关闭数据库
+
+conn=dbapi2.connect("c:\\mytest.db")
+..... 中间处理过程
+conn.close()
+
+解说：
+
+    (1)     dbapi2.connect("c:\\mytest.db")
+
+                打开一个 sqlite 数据库
+                "c:\\mytest.db"   是要打开的数据库文件名。
+                如果 c:\mytest.db 文件已存在，则打开，否则以此文件名创建一个库空的sqlite 数据库。
+
+                注1: .db 扩展名不是必须的，您可使用您喜欢的任何扩展名，但是建议不要使用已约定俗成的文件扩展名。
+                注2: 如果 c:\mytest.db 文件已存在，并且不是 sqlite 数据库，则打开失败。
+                注3: 如果文件名用 :memory ， 则是内存数据库，这在即时交易
+
+        系统中非常有用(若干年前，内存数据库要花很多银子才能买到！)。
+
+    (2)     当您对数据库操作完毕后，请使用 conn.close() 关闭数据库。
+
+三、在数据库中创建数据表
+
+from sqlite3 import dbapi2
+conn=dbapi2.connect("c:\\mytest.db")
+
+sql = "CREATE TABLE IF NOT EXISTS mytb ( a char , b int , c real )"
+
+conn.execute( sql )
+conn.close()
+
+解说：
+
+    conn.execute ( sql )
+
+        ( 1 ) CREATE TABLE 表示创建一个数据表 ， 该表的名字是 mytb 。
+        ( 2 ) IF NOT EXISTS 表示: 如果数据库中不存 mytb 表的话，就创建 mytb , 如果该表已存在，则什么也不做。
+        ( 3 ) a char , b int , c real 表示该表有三个字段， a 是字符串类型， b 是整数类型, c 是实数类型。
+
+四、 列出SQLite数据库中的所有数据表
+        使用上面一步创建了数据表后，我们想看一看，数据库中已创建的表的情况：
+        下面的用法，请参见“六” 节说明。
+
+from sqlite3 import dbapi2
+conn=dbapi2.connect("c:\\mytest.db")
+sql = "CREATE TABLE IF NOT EXISTS mytb ( a char , b int , c real )"
+conn.execute( sql )
+cs = conn.cursor( )
+
+cs.execute("SELECT name, sql FROM sqlite_master WHERE type='table'")
+recs = cs.fetchall( )
+print ( recs )
+
+cs.close()
+conn.close()
+
+-----    运行结果： ---------------------
+
+[('mytb', 'CREATE TABLE mytb ( a char , b int , c real )')]
+
+这表明：
+    我们已成功创建了 表 "mytb" , 使用的语句是 : CREATE TABLE mytb ( a char , b int , c real )
+
+五、 向数据表中加入记录:
+
+#coding=gbk
+from sqlite3 import dbapi2
+# 打开数据库 c:\mytest.db
+conn=dbapi2.connect("c:\\mytest.db")
+# 创建数据表 mytb
+sql = "CREATE TABLE IF NOT EXISTS mytb ( a char , b int , c real )"
+conn.execute( sql )
+
+#向数据表中 加入记录
+cs = conn.cursor( )
+cs.execute( "INSERT INTO mytb ( a,b,c ) values( '张三',25, 1200.51)" )
+cs.execute( "INSERT INTO mytb ( a,b,c ) values( '李四',23, 1300.06)" )
+
+# 将加入的记录保存到磁盘中
+conn.commit()   # 如果不执行这一句，加入的记录在退出本程序后将丢失。
+
+# 打开数据表
+cs.execute( "SELECT * FROM mytb ")
+# 取出所有记录
+recs = cs.fetchall( )
+# recs 是一个数组，每个元素代表一条记录
+print ( "共", len(recs),"条记录" )
+print ( recs )
+cs.close()
+conn.close()
+
+--- 结果---:
+
+>>>
+共 2 条记录
+[('张三', 25, 1200.51), ('李四', 23, 1300.06)]
+>>>
+
+六 、 删除记录
+
+#coding=gbk
+from sqlite3 import dbapi2
+# 打开数据库 c:\mytest.db
+conn=dbapi2.connect("c:\\mytest.db")
+# 创建数据表 mytb
+sql = "CREATE TABLE IF NOT EXISTS mytb ( a char , b int , c real )"
+conn.execute( sql )
+
+cs = conn.cursor( )
+
+# 删除 mytb 中字段a 的值为张三的记录
+cs.execute("DELETE FROM mytb WHERE A='张三' ")
+
+# 删除 mytb 中 的所有记录
+cs.execute("DELETE FROM mytb   ")
+
+cs.execute( "INSERT INTO mytb ( a,b,c ) values( '张三',25, 1200.51)" )
+cs.execute( "INSERT INTO mytb ( a,b,c ) values( '李四',23, 1300.06)" )
+cs.execute( "INSERT INTO mytb ( a,b,c ) values( '三五',24, 1800.06)" )
+cs.execute( "INSERT INTO mytb ( a,b,c ) values( '刘丽丽',21, 900.01)" )
+
+# 将加入的记录保存到磁盘中
+conn.commit()   # commit 提交的意思
+
+cs.close()
+conn.close()
+
+
+
+七、 一个完整的示例
+
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#导入日志及SQLite3模块
+import logging
+import logging.config
+import sqlite3
+
+#日志配置文件名
+LOG_FILENAME = 'logging.conf'
+
+#日志语句提示信息
+LOG_CONTENT_NAME = 'sqlite_log'
+
+#SQLite数据库名称
+DB_SQLITE_PATH = ".\\db\\sqlite_pytest.db"
+
+def log_init(log_config_filename, logname):
+    '''''
+    Function:日志模块初始化函数
+    Input：log_config_filename:日志配置文件名
+           lognmae:每条日志前的提示语句
+    Output: logger
+    author: socrates
+    date:2012-02-11
+    '''
+    logging.config.fileConfig(log_config_filename)
+    logger = logging.getLogger(logname)
+    return logger
+
+def operate_sqlite3_tbl_product():
+    '''''
+    Function:操作SQLITE3数据库函数
+    Input：NONE
+    Output: NONE
+    author: socrates
+    date:2012-02-11
+    '''
+    sqlite_logger.debug("operate_sqlite3_tbl_product enter...")
+
+    #连接数据库
+    try:
+        sqlite_conn = sqlite3.connect(DB_SQLITE_PATH)
+    except sqlite3.Error, e:
+         print 'conntect sqlite database failed.'
+         sqlite_logger.error("conntect sqlite database failed, ret = %s" % e.args[0])
+         return
+
+    sqlite_logger.info("conntect sqlite database(%s) succ." % DB_SQLITE_PATH)
+
+    #获取游标
+    sqlite_cursor = sqlite_conn.cursor()
+
+    #删除表
+    sql_desc2 = "DROP TABLE IF EXISTS tbl_product3;"
+    try:
+        sqlite_cursor.execute(sql_desc2)
+    except sqlite3.Error, e:
+         print 'drop table failed'
+         sqlite_logger.error("drop table failed, ret = %s" % e.args[0])
+         sqlite_cursor.close()
+         sqlite_conn.close()
+         return

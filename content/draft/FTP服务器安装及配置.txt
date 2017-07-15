@@ -1,0 +1,61 @@
+﻿FTP 服务器安装及配置
+
+安装 vsftpd 软件，全名 very secure FTP daemon
+
+sudo apt-get install vsftpd
+备份配置文件
+
+sudo cp /etc/vsftpd.conf /etc/vsftpd.conf.bak
+创建这个文件，下面有说为什么创建它 sudo touch /etc/vsftpd.chroot_list
+修改配置文件 sudo vim /etc/vsftpd.conf
+
+# 不允许匿名者登陆
+anonymous_enable=NO
+# 允许本地用户登陆
+local_enable=YES
+# 允许用户上传数据
+write_enable=YES
+# 本地用户上传文件权限为 664, 文件夹为 775
+local_umask=002
+# 使用本地时间
+use_localtime=YES
+# 本地用户启用 chroot, 意思就是，根被改变为用户的家目录，就进不去其它目录了，当然是为了安全了
+chroot_local_user=YES
+chroot_list_enable=YES
+# 在这个列表中的账号不进行 chroot, 即使没有账号也必须要有 "/etc/vsftpd.chroot_list" 这个文件
+chroot_list_file=/etc/vsftpd.chroot_list
+
+# 只列出了一些的配置，还有很多可查看配置文件内部的说明，更详细请 "man 5 vsftpd.conf"
+但是问题来了，从 vsftpd 2.3.5 开始，chroot 目录必须为不可写
+最简单的解决办法就是 sudo chmod ugo-w /home/pi （对于系统默认的 pi 用户来说）
+但是这样又出现新问题了，家目录变成不可写了，如果你没必要在家目录里写的话那也无所谓，但如果要写呢？
+
+这里提供一个办法，而不改变原来用户家目录
+新建一个用户 ftppi, 将它的家目录变为不可写，且 pi 和 ftppi 属于同一个组 pi，实现协作编辑。 我们上传下载使用这个目录 /home/pi/nas-data/nas-data，也是我们配置 samba 共享所使用的目录， 详情见上上个标题《安装并配置 Samba》
+如果你不想让父母修改 /home/pi/nas-data/nas-data 中的文件，但是要能读取。 可以新建一个用户 ftpparents, 不将 ftpparents 用户加入组 pi 就可以了。 因为 nas-data 中的文件对于除 pi 和 ftppi 用户之外的用户是只读的
+因 Raspbian 系统默认 umask 为 022, 所以需要一些额外的操作
+
+新建一个用户 ftppi, 家目录为 /home/pi/nas-data, 指定所属组 pi
+
+sudo useradd -d /home/pi/nas-data -g pi ftppi
+创建 ftppi 用户的密码
+
+sudo passwd ftppi
+如果不允许 ftppi 账户登陆系统，但是能用 ftp, 做如下修改
+sudo vim /etc/passwd, 找到 “ftppi” 这一行，将最后的 “/bin/bash” 改为 “/bin/false”
+sudo vim /etc/shells, 添加一行 “/bin/false”
+将家目录变为不可写
+/home/pi/nas-data 不可写，/home/pi/nas-data/nas-data 可写（实际我们要用的是这个目录）
+
+sudo chmod 555 /home/pi/nas-data
+将 pi 用户的 umask 修改为 002, 只有 pi 用户登陆才有效，系统才会去执行 “/home/pi/.profile” 这个脚本
+sudo vim /home/pi/.profile, 添加一行 “umask 002”
+这样新建文件权限为 664，而 pi 和 ftppi 同属于 pi 组，即可相互编辑文件
+
+修改 /home/pi/nas-data 文件夹内所有文件权限为 664, 文件夹权限为 775
+
+find /home/pi/nas-data/ -type f -print0 | xargs -0 chmod 664
+find /home/pi/nas-data/ -type d -print0 | xargs -0 chmod 775
+以上步骤完成后，即实现了 pi 和 ftppi 可共同编辑 /home/pi/nas-data/nas-data 目录下的文件
+一般情况下用 ftppi 登陆 ftp 就可以了
+顺便一说，umask 为 002，方便团队协作；umask 为 022 看上去貌似是 owner, 只有自己私有（组用户和其它用户不可写）

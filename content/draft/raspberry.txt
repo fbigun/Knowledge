@@ -1,0 +1,21 @@
+sudo update-rc.d networking enable
+ 
+ 
+ 
+auto lo
+iface lo inet loopback
+
+iface eth0 inet static
+address 192.168.1.88
+netmask 255.255.255.0
+gateway 192.168.1.1
+dns-nameservers 223.5.5.5
+
+iface wlan0 inet static
+address 192.168.1.88
+netmask 255.255.255.0
+gateway 192.168.1.1
+dns-nameservers 223.5.5.5
+wpa-ssid 要连接的wlan ssid
+wpa-passphrase wlan密码
+wireless-channel 11

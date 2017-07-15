@@ -1,0 +1,172 @@
+    SQLite顾名思议是以 SQL为基础的数据库软件，SQL是一套强大的数据库语言，主要概念是由「数据库」、「资料表」（table）、「查询指令」（queries）等单元组 成的「关联性数据库」（进一步的概念可参考网络上各种关于SQL及关联性数据库的文件）。
+    因为SQL的查询功能强大，语法一致而入门容易，因此成为现今主 流数据库的标准语言（微软、Oracle等大厂的数据库软件都提供SQL语法的查询及操作）。
+    以下我们就建立数据库、建立资料表及索引、新增资料、查询资料、更改资料、移除资料、sqlite3命令列选项等几个项目做简单的介绍。
+
+    目录
+         1 建立数据库档案
+         2 在sqlite3提示列下操作
+         3 SQL的指令格式
+         4 建立资料表
+         5 建立索引
+         6 加入一笔资料
+         7 查询资料
+         8 如何更改或删除资料
+         9 其他sqlite的特别用法
+         10 小结
+
+建立数据库档案
+
+用sqlite3建立数据库的方法很简单，只要在shell下键入（以下$符号为shell提示号，请勿键入）：
+Sql代 码
+$ sqlite3 foo.db
+
+如果目录下没有foo.db，sqlite3就会建立这个数据库。sqlite3并没有强制数据库档名要怎么取，因此如果你喜欢，也可以取个例如 foo.icannameitwhateverilike的档名。
+
+在sqlite3提示列下操作
+
+进入了sqlite3之后，会看到以下文字：
+
+SQLite version 3.1.3Enter ".help" for instructionssqlite>
+
+这时如果使用.help可以取得求助，.quit则是离开（请注意：不是quit）
+
+SQL的指令格式
+
+所以的SQL指令都是以分号（;）结尾的。如果遇到两个减号（--）则代表注解，sqlite3会略过去。
+
+建立资料表
+
+假设我们要建一个名叫film的资料表，只要键入以下指令就可以了：
+Sql代 码
+create   table  film(title, length,  year , starring);
+
+这样我们就建立了一个名叫film的资料表，里面有name、length、year、starring四个字段。
+
+这个create table指令的语法为：
+Sql代 码
+create   table  table_name(field1, field2, field3, ...);
+
+table_name是资料表的名称，fieldx则是字段的名字。sqlite3与许多SQL数据库软件不同的是，它不在乎字段属于哪一种资料 型态：sqlite3的字段可以储存任何东西：文字、数字、大量文字（blub），它会在适时自动转换。
+
+建立索引
+
+如果资料表有相当多的资料，我们便会建立索引来加快速度。好比说：
+Sql代 码
+create   index  film_title_index  on  film(title);
+
+意思是针对film资料表的name字段，建立一个名叫film_name_index的索引。这个指令的语法为
+Sql代 码
+create   index  index_name  on  table_name(field_to_be_indexed);
+
+一旦建立了索引，sqlite3会在针对该字段作查询时，自动使用该索引。这一切的操作都是在幕后自动发生的，无须使用者特别指令。
+
+加入一笔资料
+
+接下来我们要加入资料了，加入的方法为使用insert into指令，语法为：
+Sql代 码
+insert   into  table_name  values (data1, data2, data3, ...);
+
+
+例如我们可以加入
+Sql代 码
+insert   into  film  values  ( 'Silence of the Lambs, The' , 118, 1991,  'Jodie Foster' ); insert   into  film  values  ( 'Contact' , 153, 1997,  'Jodie Foster' ); insert   into  film  values  ( 'Crouching Tiger, Hidden Dragon' , 120, 2000,  'Yun-Fat Chow' ); insert   into  film  values  ( 'Hours, The' , 114, 2002,  'Nicole Kidman' );
+
+如果该字段没有资料，我们可以填NULL。
+
+查询资料
+
+讲到这里，我们终于要开始介绍SQL最强大的select指令了。我们首先简单介绍select的基本句型：
+Sql代 码
+select  columns  from  table_name  where  expression;
+
+
+最常见的用法，当然是倒出所有数据库的内容：
+Sql代 码
+select  *  from  film;
+
+
+如果资料太多了，我们或许会想限制笔数：
+Sql代 码
+select  *  from  film limit 10;
+
+
+或是照着电影年份来排列：
+Sql代 码
+select  *  from  film  order   by   year  limit 10;
+
+
+或是年份比较近的电影先列出来：
+Sql代 码
+select  *  from  film  order   by   year   desc  limit 10;
+
+或是我们只想看电影名称跟年份：
+Sql代 码
+select  title,  year   from  film  order   by   year   desc  limit 10;
+
+查所有茱蒂佛斯特演过的电影：
+Sql代 码
+select  *  from  film  where  starring= 'Jodie Foster' ;
+
+查所有演员名字开头叫茱蒂的电影('%' 符号便是 SQL 的万用字符）：
+Sql代 码
+select  *  from  film  where  starring  like   'Jodie%' ;
+
+查所有演员名字以茱蒂开头、年份晚于1985年、年份晚的优先列出、最多十笔，只列出电影名称和年份：
+Sql代 码
+select  title,  year   from  film  where  starring  like   'Jodie%'   and   year  >= 1985  order   by   year   desc  limit 10;
+
+有时候我们只想知道数据库一共有多少笔资料：
+Sql代 码
+select   count (*)  from  film;
+
+有时候我们只想知道1985年以后的电影有几部：
+Sql代 码
+select   count (*)  from  film  where   year  >= 1985;
+
+（进一步的各种组合，要去看SQL专书，不过你大概已经知道SQL为什么这么流行了：这种语言允许你将各种查询条件组合在一起──而我们还没提到 「跨数据库的联合查询」呢！）
+
+如何更改或删除资料
+
+了解select的用法非常重要，因为要在sqlite更改或删除一笔资料，也是靠同样的语法。
+
+例如有一笔资料的名字打错了：
+Sql代 码
+update  film  set  starring= 'Jodie Foster'   where  starring= 'Jodee Foster' ;
+
+就会把主角字段里，被打成'Jodee Foster'的那笔（或多笔）资料，改回成Jodie Foster。
+Sql代 码
+delete   from  film  where   year  < 1970;
+
+就会删除所有年代早于1970年（不含）的电影了。
+
+其他sqlite的特别用法
+
+sqlite可以在shell底下直接执行命令：
+Sql代 码
+sqlite3 film.db  "select * from film;"
+
+输出 HTML 表格：
+Sql代 码
+sqlite3 -html film.db  "select * from film;"
+
+将数据库「倒出来」：
+Sql代 码
+sqlite3 film.db  ".dump"  >  output .sql
+
+利用输出的资料，建立一个一模一样的数据库（加上以上指令，就是标准的SQL数据库备份了）：
+Sql代 码
+sqlite3 film.db <  output .sql
+
+在大量插入资料时，你可能会需要先打这个指令：
+
+begin;
+
+插入完资料后要记得打这个指令，资料才会写进数据库中：
+
+commit;
+
+小结
+        以上我们介绍了SQLite这套数据库系统的用法。事实上OS X也有诸于SQLiteManagerX这类的图形接口程序，可以便利数据库的操作。不过万变不离其宗，了解SQL指令操作，SQLite与其各家变种就 很容易上手了。
+        至于为什么要写这篇教学呢？除了因为OS X Tiger大量使用SQLite之外（例如：Safari的RSS reader，就是把文章存在SQLite数据库里！你可以开开看~/Library/Syndication/Database3这个档案，看看里面有 什么料），OpenVanilla从0.7.2开始，也引进了以SQLite为基础的词汇管理工具，以及全字库的注音输入法。因为使用SQLite，这两 个模块不管数据库内有多少笔资料，都可以做到「瞬间启动」以及相当快速的查询回应。
+        将一套方便好用的数据库软件包进OS X中，当然也算是Apple相当相当聪明的选择。再勤劳一点的朋友也许已经开始想拿SQLite来记录各种东西（像我们其中就有一人写了个程序，自动记录 电池状态，写进SQLite数据库中再做统计......）了。想像空间可说相当宽广。
+        目前支援SQLite的程序语言，你能想到的大概都有了。这套数据库2005年还赢得了美国O'Reilly Open Source Conference的最佳开放源代码软件奖，奖评是「有什么东西能让Perl, Python, PHP, Ruby语言团结一致地支援的？就是SQLite」。由此可见SQLite的地位了。而SQLite程序非常小，更是少数打 "gcc -o sqlite3 *"，不需任何特殊设定就能跨平台编译的程序。小而省，小而美，SQLite连网站都不多赘言，直指SQL语法精要及API使用方法，原作者大概也可以算 是某种程序设计之道（Tao of Programming）里所说的至人了。

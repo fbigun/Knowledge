@@ -1,0 +1,14 @@
+# pacman -S wpa_actiond ifplugd netctl-auto@interface.service 或 netctl-ifplugd@interface.service
+Description='A simple WPA encrypted wireless connection using a static IP'
+Interface=wlan0
+Connection=wireless
+Security=wpa
+ESSID='TP-LINK_yuwei'
+#Key='yuwei1994.'
+Key=276db950fea2e831f37820037308f69204a5a137a833443783b071aeecac505b
+IP=static
+Address='192.168.0.115/24'
+Gateway='192.168.0.1'
+DNS=('223.5.5.5')
+# Uncomment this if your ssid is hidden
+#Hidden=yes

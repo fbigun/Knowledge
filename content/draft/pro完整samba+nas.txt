@@ -1,0 +1,118 @@
+              建议上2T笔记本硬盘 因为亚马逊的WD2T非常便宜，如果容量太小 星域有要求！本文暂时不做星域讲解。
+
+
+1.二代原生沒有opt，給它弄一个
+             cd / 
+
+             mkdir opt
+
+             cd /opt
+   我们可以用rm命令来删除当前目录下的所有内容。
+
+             rm -rf *
+
+   当我们想重头再来时，这个命令相当有用，可以给我们一个清洁的安装目录。
+
+2.安装entware
+             wget http://qnapware.zyxmon.org/binaries-armv7/installer/entware_install_arm.sh
+ 给予执行权
+             chmod 777 ./entware_install_arm.sh
+   安裝
+             sh ./entware_install_arm.sh
+
+   二代PRO 的开机自启改成
+             vi /etc/rc.local
+   按下字母"i"，进入修改模式
+   把 exit 0 刪去
+   添加
+             sleep 30
+             /opt/etc/init.d/rc.unslung start
+   按下"esc"，进入命令模式
+   输入:wq回车
+   完成~~
+
+   添加opt环境变量：
+             vi /etc/profile
+   在這行后面export PATH=
+   加俩行
+             export PATH="$PATH:/opt/bin"
+             export PATH="$PATH:/opt/sbin"
+   entware到這安裝完成
+
+3.安裝samba
+            /opt/bin/opkg install samba36-server
+
+            cd /opt/etc/samba
+   把原conf檔復制一份
+            cp smb.conf.template smb.conf
+   修改conf参数
+            vi smb.conf
+[global]
+        netbios name = XunLei 
+        display charset = UTF-8
+        interfaces = 127.0.0.1/8 lo 192.168.1.125/24 br-lan 
+        server string = XunLei Share
+        unix charset = UTF-8
+        workgroup = WORKGROUP
+        browseable = yes
+        deadtime = 30
+        domain master = yes
+        encrypt passwords = true
+        enable core files = no
+        guest account = nobody
+    #   guest account = root
+        guest ok = yes
+    #   invalid users = root
+        local master = yes
+        load printers = no
+        map to guest = Bad User
+        max protocol = SMB2
+        min receivefile size = 16384
+        null passwords = yes
+        obey pam restrictions = yes
+        os level = 20
+        passdb backend = smbpasswd
+        preferred master = yes
+        printable = no
+        security = user
+        smb encrypt = disabled
+        smb passwd file = /opt/etc/samba/smbpasswd
+        socket options = TCP_NODELAY IPTOS_LOWDELAY
+        syslog = 2
+        use sendfile = yes
+        writeable = yes
+
+
+[homes]
+        comment     = Home Directories
+        browsable   = no
+        read only   = no
+        create mode = 0750
+
+[sda1]
+        path = /media/sda1
+        read only = no
+        guest ok = yes
+        interfaces = 127.0.0.1/8 lo 192.168.1.125/24 br-lan
+
+   最後輸入這個重啓nas服務
+            /opt/etc/init.d/S08samba restart
+                          然后samba可以正常自启应用
+
+4.在另一个宝就可以nas挂载了
+            mount -t cifs //192.168.1.125/sda1/1507 /media/sda5 -o username=,password=,rw
+
+   因为pro的启动项是拆开的，我做的事在START=21上面挂上命令就可以了，网上其他人是新建一个START=22，本人测试不好用，还是寄生的好
+   vi /etc/rc.d
+
+   #!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+START=21
+boot() 
+{
+        /thunder/bin/run.sh &
+        sleep 10
+        mount -t cifs //192.168.1.125/sda1/1507 /media/sda5 -o username=,password=,rw
+}
+  根据我的模式寄生（不要把括号丢了）

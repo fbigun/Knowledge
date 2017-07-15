@@ -1,0 +1,7 @@
+1   打开数据库
+    $sqlite3 foo.db
+    $ sqlite3
+    > .open foo.db
+2   保存数据
+    > .save foo.db
+    

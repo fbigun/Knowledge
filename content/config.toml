@@ -1,0 +1,12 @@
+# Site settings
+baseurl = "https://fbigun.coding.me/"
+languageCode = "zh-cn"
+title = "随想"
+theme = "hyde"
+
+# Site description
+[params]
+    duoshuoShortname = "fbiguncoding"
+    description = "这里是·随想·的个人博客"
+    themeColor = "theme-base-0c"
+    layoutReverse = true

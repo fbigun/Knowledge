@@ -1,0 +1,412 @@
+Aria2c 使用举例
+声明
+
+本文是对aria2c官方文档1的一个翻译，文档本身的内容是包含在 aria2项目 中的。本文的翻译不包括metalink的部分，因为国内貌似很少用到metalink作为下载协议的。
+
+语粗词穷，若有不易理解之处，请参考原文1，或 与我联系 。
+
+基本使用
+
+下载一个文件（Download a file）：
+
+aria2c http://host/image.iso
+说明：1.10.0以后的版本默认对每个 host 使用 1 个连接，你可以使用 -max-connection-per-server 或者 -x 选项进行改变。
+
+用每个 host 两个连接从一个 host 下载一个文件（To download a file using 2 connections from single host）：
+
+aria2c -x2 http://host/image.iso
+说明：想要停止下载，可以按Ctrl-C。想要恢复下载，可以在同一个文件夹中执行相同的下载命令。只要URI指向同一个文件，URIs是可以被改变的。
+
+同时使用两个连接下载同一文件（Download a file using 2 connections）：
+
+aria2c -s2 http://host/image.iso http://mirror1/image.iso http://mirror2/image.iso
+说明：你可以指定URIs的数量多余 -s 选项设定的数。在这个例子中，前两个URL会被用于下载，而第三个URL作为备用（如果前面两个有个挂了，第三个顶上）。
+
+同时从FTP和HTTP源下载一个文件（Download a file from HTTP and FTP servers）：
+
+aria2c http://host1/file.zip ftp://host2/file.zip
+并行下载任意数目的URI, metalink, torrent（Parallel downloads of arbitrary number of URI, metalink, torrent）：
+
+aria2c -Z http://host/file1 file2.torrent file3.metalink
+说明：如果你只是下载 torrent 和 metalink 的文件，那么选项 -Z 将不是必须的。所以你可以使用以下这个命令同时下载bt文件。
+
+aria2c file1.torrent file2.torrent
+并发下载一个文件中的URI（Download files listed in a file concurrently）：
+
+aria2c -ifiles.txt -j5
+说明：选项 -j 用于指定同时下载的文件的数量。你可以在文件中指定本地的 torrent 和 metalink 文件。
+
+说明：你可以指定一些 选项 在下载文件（input list file）中。
+
+在退出时保存错误/未完成的下载（Save error/unfinished downloads on exit）：
+
+aria2c -ifiles.txt --save-session=out.txt
+当你按下Ctrl-C或者 aria2 退出时，所有的错误（error）/未完成（unfinished）下载将会保存到 out.txt 文件中。注意通过 XML-RPC 方式(aria2.addTorrent and aria2.addMetalink)添加的下载不会被保存！你可以使用这个文件作为一个输入文件列表（input file list）来重新开始下载。
+
+aria2c -iout.txt
+Metalink Download（不翻译）
+
+BT下载（BitTorrent Download）
+
+通过网上的种子文件下载（Download files from remote BitTorrent file）
+
+aria2c http://site/file.torrent
+通过网上的种子文件下载，种子保存在内存（Download files from remote BitTorrent file; torrent file itself is processed in memory）
+
+aria2c --follow-torrent=mem http://site/file.torrent
+通过本地的种子文件下载（Download using a local torrent file）
+
+aria2c -u40K /path/to/file.torrent
+说明： -u, -max-upload-limit 指定最大的上传速度
+
+说明：想要停止下载，可以按Ctrl-C。想要恢复下载，可以在同一个文件夹中执行相同的下载命令。只要URI指向同一个文件，URIs是可以被改变的。
+
+你可以同时进行多个 bt 的下载：
+
+aria2c /path/to/file1.torrent /path/to/file2.torrent
+通过 bt magnet uri 下载（Download using BitTorrent Magnet URI）
+
+aria2c "magnet:?xt=urn:btih:248D0A1CD08284299DE78D5C1ED359BB46717D8C&dn=aria2"
+说明：在 bt magnet uri 包含"&"的时候记住要加单引号或者双引号。强烈推荐打开 DHT 选项。 -enable-dht
+
+保存元数据到 .torrent 文件中（Save metadata as .torrent file）
+
+aria2c --bt-save-metadata "magnet:?xt=urn:btih:248D0A1CD08284299DE78D5C1ED359BB46717D8C&dn=aria2"
+上面那个命令会保存元数据到一个名为"248d0a1cd08284299de78d5c1ed359bb46717d8c.torrent"的种子文件。
+
+自动调节连接数（Adjust the number of peers adaptively）
+
+如果每个种子的下载速度都低于 200K 的话， aria2 会临时增加连接数来试着提高下载速度。
+
+aria2c --bt-request-peer-speed-limit=200K file.torrent
+说明：配置 -bt-request-peer-speed-limit 选项为合适的值可以在某些情况下提高你的下载速度。
+
+打开 DHT （Enable DHT）
+
+aria2c --enable-dht http://site/file.torrent
+说明：从 1.7.2 版本开始， DHT 默认是打开的。当通过 HTTP/FTP 下载的时候 DHT 不会启用。当首个种子下载开始， aria2 初始化 DHT 功能，之后， DHT 会一直运行知道 aria2 退出为止。
+
+打开 IPv6 的 DHT （Enable IPv6 DHT）
+
+aria2c --enable-dht6 --dht-listen-port=6881 --dht-listen-addr6=YOUR_GLOBAL_UNICAST_IPV6_ADDR --enable-async-dns6
+说明：如果 aria2c 编译的时候没有加入 c-ares ， -enable-async-dns6 不是必须的。 aria2 会在 IPv4 和 IPv6 之间对 DHT 共享一些端口。
+
+Add and remove tracker URI
+
+接下来的例子指示 aria2 移除 file.torrent 文件中所有的 tracker announce URIs ，并用"http://tracker1/announce" 和 "http://tracker2/announce" 代替。
+
+aria2c --bt-exclude-tracker="*" --bt-tracker="http://tracker1/announce,http://tracker2/announce" file.torrent
+加密（Encryption）
+
+默认情况下， aria2 能够同时支持加密和非加密连接。它会先尝试使用加密连接，如果失败则尝试非加密连接。
+
+强制只使用加密连接：
+
+aria2c --bt-require-crypto=true http://site/file.torrent
+一共有两种加密类型：只加密头或者全部加密。默认下，如果对方支持两种加密类型， aria2 会选择只加密头。如果想让 aria2 总是使用全加密连接：
+
+aria2c --bt-min-crypto-level=arc4 http://site/file.torrent
+打印一个种子文件中的内容（Print the contents of the torrent file）
+
+aria2c -S file.torrent
+选择性下载文件（Download only selected files using index (usually called "selectable download")）
+
+aria2c --select-file=1-4,8 -Tfile.torrent
+说明：序号（index）可以通过 -S 选项输出
+
+改变监听端口（Change the listening port for incoming peer）
+
+aria2c --listen-port=6881-6883 file.torrent
+说明：确认该 TCP 端口是可用的
+
+指定 BT 下载停止的条件（Specify the condition to stop program after torrent download finished）
+
+aria2c --seed-time=120 --seed-ratio=1.0 file.torrent
+说明：在上面的这个例子中， 当做种 120分钟 或者种子率大于1以后， aria2 会退出。
+
+调节上传速度（Throttle upload speed）
+
+aria2c --max-upload-limit=100K file.torrent
+为已经下载完成的文件做种（Seeding already downloaded file）
+
+你可以使用 -V 选项给已经下载好的文件做种。它会先校验文件的完整性。
+
+aria2c -V -d/path/to/dir file.torrent
+如果你肯定文件是正确的，你可以使用 -bt-seed-unverified 选项跳过做种前的文件校验。
+
+aria2c --bt-seed-unverified -d/path/to/dir file.torrent
+你可以给多个文件做种：
+
+aria2c --bt-seed-unverified -d/path/to/dir file1.torrent file2.torrent
+用序号指定文件名（Specify file name with index）
+
+为 BitTorrent 下载下来的文件指定文件名，你首先需要通过 -S 选项知道该文件的序号。比如一个种子文件 -S 选项输出如下：
+
+idx|path/length
+===+======================
+1|dist/base-2.6.18.iso
+|99.9MiB
+---+----------------------
+2|dist/driver-2.6.18.iso
+|169.0MiB
+---+----------------------
+把 dist/base-2.6.18.iso 保存为 tmp/mydir/base.iso ， /dist/driver-2.6.18.iso 保存为 /tmp/dir/driver.iso ，可以使用一下的命令：
+
+aria2c --dir=/tmp --index-out=1=mydir/base.iso --index-out=2=dir/driver.iso file.torrent
+说明： -index-out 选项针对通过 HTTP 方式获取种子文件的方式无效。它只能针对本地种子文件的下载。 aria2 不会记住 -index-out 选项中指定的地址，你必须在每次开始该任务的时候重新指定 -index-out 的值。如果你忘了再次指定输出文件的地址， aria2 不会提醒你，所以你必须谨慎地使用这个选项。
+
+为预览的文件指定优先块（Prioritize piece for previewing files）
+
+优先下载每个文件开头的 1MiB 的内容。
+
+aria2c --bt-prioritize-piece=head file.torrent
+使用代理下载（Use With Proxy）
+
+为所有的连接设置代理服务器（Set proxy server to use all protocols(HTTP(S)/FTP)）
+
+aria2c --all-proxy='http://proxy:8080' http://host/file
+说明： -all-proxy 选项会被具体的代理选项重载： -http-proxy, -https-proxy, -ftp-proxy.
+
+只为 HTTP 设置代理服务器（Set proxy server to be in HTTP only）
+
+aria2c --http-proxy='http://proxy:8080' http://host/file
+设置需要验证的代理服务器（Use proxy that requires authentication）
+
+aria2c --http-proxy='http://proxy:8080' --http-proxy-user='username' --http-proxy-passwd='password' http://host/file
+aria2c --http-proxy='http://username:password@proxy:8080' http://host/file
+说明：用户名和密码需要是 percent-encoded 格式。比如，如果用户名是 myid@domain, 那么 percent-encoded 格式就是 myid%40domain.
+
+高级HTTP功能（Advanced HTTP Features）
+
+载入 cookies （Load cookies）
+
+载入 Mozilla/Firefox(1.x/2.x) 和 Netscape 格式:
+
+aria2c --load-cookies=cookies.txt http://host/file
+载入 Firefox3 格式:
+
+aria2c --load-cookies=cookies.sqlite http://host/file
+说明：你可以不加任何修改直接读取 Firefox/Mozilla's 的 cookie 内容。
+
+继续浏览器或者其它程序开始的下载任务（Resume download started by web browsers or another programs）
+
+aria2c -c -s2 http://host/partiallydownloadedfile.zip
+其它高级功能（Other Advanced Features）
+
+调节下载速度（Throttle download speed）
+
+aria2c --max-download-limit=100K http://host/file
+用 -V 选项修复一个被破坏的下载文件（Repair a damaged download using -V option）
+
+aria2c -V file.metalink
+说明：这个选项只能对支持校验码的 BitTorrent 或者 metalink 使用。
+
+如果下载速度低于某个特定值就丢弃连接（Drop connection if download speed is lower than specified value）
+
+aria2c --lowest-speed-limit=10K file.metalink
+支持参数的 URI （Parameterized URI support）
+
+你可以这样使用 URI ：
+
+aria2c -P http://{host1,host2,host3}/file.iso
+你可以指定数字序号（You can specify numeric sequence using []）
+
+aria2c -Z -P http://host/image[000-100].png
+说明： -Z 选项是必须的，如果所有的 URL 都是指向不同的文件的话。
+
+可以指定步长（You can specify step counter）
+
+aria2c -Z -P http://host/image[A-Z:2].png
+Time-stamping
+
+aria2 会在下载完成的时候从服务器拿到该文件的 timestamp 并设置到本地文件
+
+aria2c -R http://host/file.iso
+当下载完成后执行一条命令（Execute command when download finishes）
+
+aria2c --on-download-complete=COMMAND http://example.org/file.iso
+参见 -on-download-error, -on-download-start 和 -on-download-stop 选项， 或者执行：
+
+aria2c -h #hook
+写入到 /dev/null （Writing to /dev/null）
+
+aria2c -d /dev -o null --allow-overwrite=true http://example.org/file
+需要 -allow-overwrite=true 是为了避免 aria2 重命名已经存在的 /dev/null。
+
+输入文件（Input File）
+
+http://server/file.iso http://mirror/file.iso
+dir=/iso_images
+out=file.img
+http://foo/bar
+脚注:
+1 原文地址： http://sourceforge.net/apps/trac/aria2/wiki/UsageExample
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+aria2配置示例
+December 24 2012 ,
+其实面对man的存在，写什么总结完全没有必要，一切宝藏都在manual。不过反正不会有人会读就是了。那我就写一下吧
+
+##基础
+首先，aria2或者叫做aria2c，它是一个下载器，嗯。 
+常用的两种模式是直接下载，比如 aria2c "http://host/file.zip" 这样，当它完成后就退出了，就像wget（估计你们也不知道吧）那样。 
+另一种就是rpc server模式，特点就是，它启动之后什么都不干，然后等着从rpc接口添加任务，下载完也不退出，而是一直等着。对，就像迅雷干的那样，当然，它不会上传你硬盘上的数据。
+
+因为第一种方式要每次都敲命令，除非像我是原生*nix，没有命令行就没法用电脑，估计也没什么用，于是常用的就是第二种。一般启动命令是 aria2c --enable-rpc --rpc-listen-all=true --rpc-allow-origin-all -c -D 。但是，其实这个命令是不好的！不要使用这种启动方式。 
+首先，用命令方式导致配置不方便修改保存，-D导致无法看到出错信息。
+
+推荐启动方式是使用配置文件 $HOME/.aria2/aria2.conf 。嗯，我知道路由上这个地址是无法修改或者重启后会丢失的，那么你可以放到别的地方，然后 aria2c --conf-path=<PATH> 注意 <PATH> 填完整路径，因为鬼知道这个程序是从那个路径启动的。-D (用于后台执行, 这样ssh断开连接后程序不会退出） 只有在确认OK之后在启动脚本中使用。
+
+以下方案都基于配置文件方式
+
+##图形界面
+aria2是没有图形界面的，已知相对好用的图形界面有：
+
+我的YAAW
+另一个web前端webui-aria2
+请使用chrome，firefox等现代浏览器访问。这两个东西都可以直接使用，除了看英文不爽以外，有什么必要下载回来使用？（吐槽：难道你们就不觉得webui-aria2的title总是被压成好几行，诡异的配色（对，说的就是那个蓝色背景，深蓝颜色的 Use custom IP and port settings 按钮）不难看吗？） 
+这两个东西上的配置在重启后都会失效! 使用配置文件保存您的设置
+
+windows下有Aria2c Remote Control
+iphone有Aria2 Download Manager
+图形界面基本都基于RPC模式，所以一定确定开启了RPC，IP端口可访问，并且在管理器中填写了正确的地址。
+
+##配置
+
+请将所有配置置于配置文件中 
+只有在确认配置无误后再加上 -D 选项 
+请阅读出错信息!
+
+###RPC
+需要1.14及以上版本 
+http://aria2.sourceforge.net/manual/en/html/aria2c.html#rpc-options
+
+#允许rpc
+enable-rpc=true
+#允许所有来源, web界面跨域权限需要
+rpc-allow-origin-all=true
+#允许非外部访问
+rpc-listen-all=true
+#RPC端口, 仅当默认端口被占用时修改
+#rpc-listen-port=6800
+如果启动时出现 Initializing EpollEventPoll failed. 或相似错误, 在配置中加上 event-poll=select
+
+使用token验证（建议使用，需要1.18.4以上版本，帐号密码方式将在后续版本中停用！）
+
+# token验证
+rpc-secret=secret
+在YAAW中使用 http://token:secret@hostname:port/jsonrpc 的地址格式设置secret.
+
+如果需要使用密码验证（需要1.15.2以上，1.18.6以下版本）
+
+#用户名
+rpc-user=username
+#密码
+rpc-passwd=passwd
+在YAAW中使用 http://username:passwd@hostname:port/jsonrpc 的地址格式设置密码. 
+对于RPC模式来说, 界面和后端是分离的, 只要给后端设置密码即可. 前端认证什么的是毫无意义的. 
+如果你比较新潮, 在YAAW中也可以用 ws:// 为前缀,只用websocket连接aria2c, 如果你不知道websocket是什么. 那就算了.
+
+###速度相关
+
+#最大同时下载数(任务数), 路由建议值: 3
+max-concurrent-downloads=5
+#断点续传
+continue=true
+#同服务器连接数
+max-connection-per-server=5
+#最小文件分片大小, 下载线程数上限取决于能分出多少片, 对于小文件重要
+min-split-size=10M
+#单文件最大线程数, 路由建议值: 5
+split=10
+#下载速度限制
+max-overall-download-limit=0
+#单文件速度限制
+max-download-limit=0
+#上传速度限制
+max-overall-upload-limit=0
+#单文件速度限制
+max-upload-limit=0
+#断开速度过慢的连接
+#lowest-speed-limit=0
+#验证用，需要1.16.1之后的release版本
+#referer=*
+###进度保存相关
+aria2c只有在正常退出时(ctrl-c), 突然断电是无法保存进度的. 在第一次使用的时候会出现会话文件不存在的错误, 手动创建一个空文件即可. 如果您编写的是自动启动脚本, 在启动aria2前加上 touch aria2.session 这句命令.
+
+input-file=/some/where/aria2.session
+save-session=/some/where/aria2.session
+#定时保存会话，需要1.16.1之后的release版
+#save-session-interval=60
+###磁盘相关
+
+#文件保存路径, 默认为当前启动位置
+dir=/some/where
+#文件缓存, 使用内置的文件缓存, 如果你不相信Linux内核文件缓存和磁盘内置缓存时使用, 需要1.16及以上版本
+#disk-cache=0
+#另一种Linux文件缓存方式, 使用前确保您使用的内核支持此选项, 需要1.15及以上版本(?)
+#enable-mmap=true
+#文件预分配, 能有效降低文件碎片, 提高磁盘性能. 缺点是预分配时间较长
+#所需时间 none < falloc ? trunc << prealloc, falloc和trunc需要文件系统和内核支持
+file-allocation=prealloc
+###BT相关
+http://aria2.sourceforge.net/manual/en/html/aria2c.html#bittorrent-specific-options
+
+#启用本地节点查找
+bt-enable-lpd=true
+#添加额外的tracker
+#bt-tracker=<URI>,…
+#单种子最大连接数
+#bt-max-peers=55
+#强制加密, 防迅雷必备
+#bt-require-crypto=true
+#当下载的文件是一个种子(以.torrent结尾)时, 自动下载BT
+follow-torrent=true
+#BT监听端口, 当端口屏蔽时使用
+#listen-port=6881-6999
+aria2亦可以用于PT下载, 下载的关键在于伪装
+
+#不确定是否需要，为保险起见，need more test
+enable-dht=false
+bt-enable-lpd=false
+enable-peer-exchange=false
+#修改特征
+user-agent=uTorrent/2210(25130)
+peer-id-prefix=-UT2210-
+#修改做种设置, 允许做种
+seed-ratio=0
+#保存会话
+force-save=true
+bt-hash-check-seed=true
+bt-seed-unverified=true
+bt-save-metadata=true
+#定时保存会话，需要1.16.1之后的某个release版本（比如1.16.2）
+#save-session-interval=60
+##常见问题
+###Internal server error
+手动访问你的JSON-RPC地址 http://hostname:port/jsonrpc?jsoncallback=1 如果没有返回, 请确认aria2是否启动以及连通性. 如果aria2在路由器后或没有公网IP, 请做好端口映射.
+
+###如何使用迅雷离线
+
+http://binux.github.com/ThunderLixianExporter/
+安装后, 在迅雷离线的右上角的设置中设置RPC地址. 
+提供chrome插件: https://chrome.google.com/webstore/detail/thunderlixianassistant/eehlmkfpnagoieibahhcghphdbjcdmen
+
+###如何使用旋风离线(QQ离线)
+http://userscripts.org/scripts/show/142624安装脚本后, 在旋风离线页面使用.
+
+###如何安装aria2
+我也不知道, 看你的box上有什么开源包管理器之类的东西, 有什么用什么. 如果没有, google之, 如果没有, 放弃吧.

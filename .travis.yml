@@ -1,0 +1,40 @@
+language: go
+go:
+- master
+
+branches:
+  only:
+  - hugo
+
+before_install:
+- openssl aes-256-cbc -K $encrypted_278ded750974_key -iv $encrypted_278ded750974_iv -in travis-CI-key.enc -out ~/.ssh/id_rsa -d
+- sudo chmod 600 ~/.ssh/id_rsa
+
+install:
+- curl -LO https://github.com/spf13/hugo/releases/download/v0.18.1/hugo_0.18.1_Linux-64bit.tar.gz
+- tar zxf hugo_0.18.1_Linux-64bit.tar.gz
+- sudo mv hugo_0.18.1_linux_amd64/hugo_0.18.1_linux_amd64 /bin/hugo
+
+addons:
+  ssh_known_hosts:
+  - git.coding.net
+  - github.com
+
+script:
+- hugo --baseURL //fbigun.github.io/
+- cd ./public
+- git init
+- git config user.name "fbigun"
+- git config user.email "rsdhlz@qq.com"
+- git add -A .
+- git commit -m "Update docs"
+- git push --force --quiet "git@github.com:fbigun/fbigun.github.io.git" master:master
+- cd ..
+- hugo --baseURL //fbigun.coding.me/
+- cd ./public
+- git add -A .
+- git commit --amend -m "Update docs"
+- git push --force --quiet "git@git.coding.net:fbigun/fbigun.coding.me.git" master:master
+
+notifications:
+  email: false

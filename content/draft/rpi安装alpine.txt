@@ -1,0 +1,54 @@
+# During setup-alpine be sure to choose [none] for where the configs must reside
+setup-alpine
+mount /dev/mmcblk0p2 /mnt
+echo "------------------------------------------"
+echo "Please wait ... Copying might take a while"
+echo "------------------------------------------"
+cp -var /bin /mnt
+cp -var /home /mnt
+cp -var /etc /mnt
+cp -var /lib /mnt
+cp -var /media/mmcblk0p1/apks /var/cache
+rm /mnt/lib/firmware
+rm /mnt/lib/modules
+cp -var /.modloop/modules /mnt/lib
+mv /mnt/lib/modules/firmware /mnt/lib/firmware
+cp -var /root /mnt
+cp -var /sbin /mnt
+cp -var /usr /mnt
+cp -var /var /mnt
+cp -va /linuxrc /mnt
+mkdir /mnt/dev
+mkdir /mnt/media
+mkdir /mnt/mnt
+mkdir /mnt/proc
+mkdir /mnt/run
+mkdir /mnt/sys
+mkdir /mnt/tmp
+sync
+echo "--------------------"
+echo "Content of mmcblk0p2"
+echo "--------------------"
+ls /mnt
+umount /mnt
+mount -o remount,rw /dev/mmcblk0p1 /media/mmcblk0p1
+umount /.modloop
+mkdir /media/mmcblk0p1/org
+mv /media/mmcblk0p1/apks /media/mmcblk0p1/org
+mv /media/mmcblk0p1/config.txt /media/mmcblk0p1/org
+mv /media/mmcblk0p1/cmdline.txt /media/mmcblk0p1/org
+mv /media/mmcblk0p1/initrd.gz /media/mmcblk0p1/org
+mv /media/mmcblk0p1/rpi.modloop.squashfs /media/mmcblk0p1/org
+echo "framebuffer_width=800
+framebuffer_height=600
+framebuffer_depth=16
+cmdline=dwc_otg.lpm_enable=0 console=tty1 elevator=deadline root=/dev/mmcblk0p2 rootfstype=ext4 rootwait" > /media/mmcblk0p1/config.txt
+sync
+echo "--------------------"
+echo "Content of mmcblk0p1"
+echo "--------------------"
+ls /media/mmcblk0p1
+echo "---------------------------------------------------"
+echo "All Done ! You can reboot now and advance with jwm2"
+echo "---------------------------------------------------"
+# reboot

@@ -1,0 +1,46 @@
+SD Card Creation
+SD卡创建
+
+Replace sdX in the following instructions with the device name for the SD card as it appears on your computer.
+替换以下说明中的sd卡的设备名称sdX为你电脑出现的名称。
+
+1. Start fdisk to partition the SD card:
+开始用fdisk来为sd卡分区：
+
+fdisk /dev/sdX
+
+2. At the fdisk prompt, delete old partitions and create a new one:
+在fdisk提示下，删除旧分区并创建一个新的分区：
+
+Type o. This will clear out any partitions on the drive.
+Type p to list partitions. There should be no partitions left.
+Type n, then p for primary, 1 for the first partition on the drive, press ENTER to accept the default first sector, then type +100M for the last sector.
+Type t, then c to set the first partition to type W95 FAT32 (LBA).
+Type n, then p for primary, 2 for the second partition on the drive, and then press ENTER twice to accept the default first and last sector.
+Write the partition table and exit by typing w.
+3. Create and mount the FAT filesystem:
+创建和挂着一个FAT文件系统
+
+mkfs.vfat /dev/sdX1
+mkdir boot
+mount /dev/sdX1 boot
+4. Create and mount the ext4 filesystem:
+创建和挂着一个EXT4文件系统
+mkfs.ext4 /dev/sdX2
+mkdir root
+mount /dev/sdX2 root
+5. Download and extract the root filesystem (as root, not via sudo):
+下载并解压一个根文件系统（使用root，不要通过sudo）
+wget http://archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
+bsdtar -xpf ArchLinuxARM-rpi-latest.tar.gz -C root
+sync
+6. Move boot files to the first partition:
+移动boot下的文件到第一个分区
+mv root/boot/* boot
+7. Unmount the two partitions:
+卸载这两个分区
+umount boot root
+8. Insert the SD card into the Raspberry Pi, connect ethernet, and apply 5V power.
+插入SD卡到树莓派，接通以太网和5V的电源。
+9. Use the serial console or SSH to the IP address given to the board by your router. The default root password is 'root'.
+使用串行控制台或SSH通过你的路由器分配的IP地址。默认的root密码是“root”。

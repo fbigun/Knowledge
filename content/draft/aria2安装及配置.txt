@@ -1,0 +1,205 @@
+﻿aria2 安装及配置 + web 前端 + 迅雷离线
+
+aria2 安装及配置
+
+关于这软件就不多说了，太有名了，总之占用资源少且非常好用
+下面来安装 aria2
+
+直接用 apt-get 安装的话，版本比较老（aria2 version 1.15.11），可自行编译最新版
+
+sudo apt-get install aria2
+或者改变 apt-get 的源来安装比较新的版本
+
+sudo vim /etc/apt/sources.list
+将 deb http://mirrordirector.raspbian.org/raspbian/ wheezy main contrib non-free rpi
+改为 deb http://mirrordirector.raspbian.org/raspbian/ testing main contrib non-free rpi
+然后更新源并安装新版的 aria2
+
+sudo apt-get update
+sudo apt-get install aria2
+若继续用稳定版的系统及其它软件的话，记得把源改回来
+
+创建 aria2 配置文件 “/home/pi/.aria2/aria2.conf” 和 “/home/pi/.aria2/aria2.session” 这个文件 (我是以 pi 账户启动 aria2 的), 命令是 mkdir /home/pi/.aria2, touch /home/pi/.aria2/aria2.session 和 vim /home/pi/.aria2/aria2.conf 配置文件内容如下，只是参考
+
+# 基本配置
+# 下载目录
+dir=/home/pi/nas-data/nas-data/Inbox
+# 下载从这个文件中找到的 urls, 需自己建立这个文件
+# touch /home/pi/.aria2/aria2.session
+input-file=/home/pi/.aria2/aria2.session
+# 最大同时下载任务数，默认 5
+max-concurrent-downloads=3
+# 断点续传，只适用于 HTTP(S)/FTP
+continue=true
+
+# HTTP/FTP 配置
+# 关闭连接如果下载速度等于或低于这个值，默认 0
+lowest-speed-limit=0
+# 对于每个下载在同一个服务器上的连接数，默认 5
+max-connection-per-server=5
+# 每个文件最小分片大小，例如文件 20M，设置 size 为 10M, 则用2个连接下载，默认 20M
+min-split-size=10M
+# 下载一个文件的连接数，默认 5
+split=5
+
+# BT 特殊配置
+# 启用本地节点查找，默认 false
+bt-enable-lpd=true
+# 指定最大文件数对于每个 bt 下载，默认 100
+bt-max-open-files=100
+# 单种子最大连接数，默认 55
+bt-max-peers=55
+# 设置最低的加密级别，可选全连接加密 arc4，默认是头加密 plain
+bt-min-crypto-level=plain
+# 总是使用 obfuscation handshake，防迅雷必备，默认 false
+bt-require-crypto=true
+# 如果下载的是种子文件则自动解析并下载，默认 true
+follow-torrent=true
+# 为 BT 下载设置 TCP 端口号，确保开放这些端口，默认 6881-6999
+listen-port=6881-6999
+# 整体上传速度限制，0 表示不限制，默认 0
+max-overall-upload-limit=0
+# 每个下载上传速度限制，默认 0
+max-upload-limit=0
+# 种子分享率大于1, 则停止做种，默认 1.0
+seed-ratio=1
+# 做种时间大于2小时，则停止做种
+seed-time=120
+
+# RPC 配置
+# 开启 JSON-RPC/XML-RPC 服务，默认 false
+enable-rpc=true
+# 允许所有来源，web 界面跨域权限需要，默认 false
+rpc-allow-origin-all=true
+# 允许外部访问，默认 false
+rpc-listen-all=true
+# rpc 端口，默认 6800
+rpc-listen-port=6800
+# 设置最大的 JSON-RPC/XML-RPC 请求大小，默认 2M
+rpc-max-request-size=2M
+# rpc 密码，可不设置
+rpc-passwd=raspberry
+# rpc 用户名，可不设置
+rpc-user=aria2pi
+
+# 高级配置
+# This is useful if you have to use broken DNS and
+# want to avoid terribly slow AAAA record lookup.
+# 默认 false
+disable-ipv6=true
+# 指定文件分配方法，预分配能有效降低文件碎片，提高磁盘性能，缺点是预分配时间稍长
+# 如果使用新的文件系统，例如 ext4 (with extents support), btrfs, xfs or NTFS(MinGW build only), falloc 是最好的选择
+# 如果设置为 none，那么不预先分配文件空间，默认 prealloc
+file-allocation=falloc
+# 整体下载速度限制，默认 0
+max-overall-download-limit=0
+# 每个下载下载速度限制，默认 0
+max-download-limit=0
+# 保存错误或者未完成的下载到这个文件
+# 和基本配置中的 input-file 一起使用，那么重启后仍可继续下载
+save-session=/home/pi/.aria2/aria2.session
+# 每5分钟自动保存错误或未完成的下载，如果为 0, 只有 aria2 正常退出才回保存，默认 0
+save-session-interval=300
+
+# 若要用于 PT 下载，需另外的配置，这里没写
+什么你配置得还不过瘾，请移步《官方配置文档》， 看完记得过来指正我这个配置的不当之处，我表示我只看了一部分
+
+运行 aria2, 测试配置是否有错误
+
+aria2c --conf-path=/home/pi/.aria2/aria2.conf
+为 aria2 添加自启动服务
+
+新建 sudo vim /etc/init.d/aria2 文件，输入以下内容
+
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          aria2
+# Required-Start:    $remote_fs $network
+# Required-Stop:     $remote_fs $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Aria2 Downloader
+### END INIT INFO
+
+USER=pi
+CONF=/home/pi/.aria2/aria2.conf
+
+case "$1" in
+start)
+    echo "Start aria2c"
+    umask 0002
+    su - $USER -c "aria2c --conf-path=$CONF -D"
+    ;;
+stop)
+    echo "Stopping aria2c, please wait..."
+    killall -w aria2c
+    ;;
+restart)
+    echo "Stopping aria2c, please wait..."
+    killall -w aria2c
+    echo "Start aria2c"
+    umask 0002
+    su - $USER -c "aria2c --conf-path=$CONF -D"
+    ;;
+*)
+    echo "$0 {start|stop|restart|status}"
+    ;;
+esac
+exit
+本来我新建的是 /etc/init.d/aria2c 文件，但是其中的 killall -w aria2c, 这用的是字符串匹配， 不光 kill 了 aria2c 还把脚本本身给 kill 了，所以我把脚本文件名改成了 aria2
+
+赋予可执行权限
+
+sudo chmod 755 /etc/init.d/aria2
+测试服务是否可以启动
+
+sudo service aria2 start
+如果出现 “Start aria2c”, 而没有其它错误的话，表示服务可以正常启动
+
+使 aria2 服务自动运行，其中当然也包括了开机运行
+
+sudo update-rc.d aria2 defaults
+web 前端的配置 yaaw 和 webui-aria2
+
+yaaw 和 webui-aria2 都是不错的，yaaw 界面简洁，wubui-aria2 功能强大，可以根据自己的喜好来选择，或者两个同时使用也可以
+
+首先保证 aria2c 正常运行着，然后进行下面的动作
+
+YAAW
+
+YAAW, 这是 yaaw 的主页，打开它
+打开左边的 Live Demo 链接
+点击右上角的小扳手，在 JSON-RPC Path 中填入 “http://raspberrypi-ip:6800/jsonrpc”
+如果设置了 rpc 密码，那么填入 “http://user:passwd@raspberrypi-ip:6800/jsonrpc”
+yaaw
+webui-aria2
+
+webui-aria2, 这是 webui-aria2 的主页，打开它
+在其中找到这个链接 http://ziahamza.github.com/webui-aria2/, 打开
+点击 “Settings” - “Connection Settings”, 一看你就明白了
+webui-aria2
+以上两个工具都是用 HTML/CSS/Javascirpt 写的，你也可以下载下来，扔到网页服务器，本地服务器虚拟主机随你玩
+
+常见问题
+
+若无法连接到 web 前端，请手动访问你的 JSON-RPC 地址 http://raspberrypi-ip:6800/jsonrpc?jsoncallback=1, 如果没有返回，请确认 aria2 是否启动以及连通性
+如果是从外网访问的, 别忘记在路由器上做好 ddns 和端口映射
+
+迅雷离线下载
+
+ThunderLixianExporter, 将迅雷离线地址导出成 aria2/wget 等下载命令的工具
+ThunderLixianAssistant, 这个项目是上个项目在 chrome 上的一个封装
+以上两个工具使用方法在主页中已经说的很详细了，就不多说了
+导出功能没有一个个去试，实测导出 yaaw 可用
+
+aria2 出现问题的解决方法
+
+有读者反馈，aria2 出问题还蛮多的，我就写一点解决的方法
+
+若 yaaw 无法使用，首先看看 aria2 是否启动以及连通性，前面不远处有说明
+
+还有一些是 aria2 本身出现了问题，这里面出现问题的可能性就多了， 我只是说一下检测问题的方法，知道了问题之后，google 一下就能解决了
+
+首先把 aria2 进程关闭，使用命令 sudo killall -w aria2c
+使用 aria2c --conf-path=/home/pi/.aria2/aria2.conf 命令来运行 aria2
+这样就能看到 aria2 的反馈，可能会出现一些 [ERROR] 提示，这样你就知道问题具体出现在哪里了

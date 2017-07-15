@@ -1,0 +1,75 @@
+1、 分区实例
+lsblk
+parted /dev/sda
+mklabel msdos
+mklabel gpt
+UEFI/GPT 示例
+首先需要一个 EFI 系统分区.如果是和 Windows 双系统启动，此分区已经存在，不要重新创建。
+用下面命令创建分区 (建议大小是 512MiB)。
+(parted) mkpart ESP fat32 1M 513M
+(parted) set 1 boot on
+剩下的空间可以按需要创建，root 占用全部 100% 剩余空间：
+(parted) mkpart primary ext3 513M 100%
+/ (20GiB)，剩下的给 /home：
+(parted) mkpart primary ext3 513M 20.5G
+(parted) mkpart primary ext3 20.5G 100%
+创建 / (20GiB), swap (4Gib), 剩下给 /home：
+(parted) mkpart primary ext3 513M 20.5G
+(parted) mkpart primary linux-swap 20.5G 24.5G
+(parted) mkpart primary ext3 24.5G 100%
+BIOS/MBR 示例
+单根目录分区：
+(parted) mkpart primary ext3 1M 100%
+(parted) set 1 boot on
+20Gib / 分区，剩下的给 /home：
+(parted) mkpart primary ext3 1M 20G
+(parted) set 1 boot on
+(parted) mkpart primary ext3 20G 100%
+/boot (100MiB), / (20Gib), swap (4GiB) 剩下的给 /home:
+(parted) mkpart primary ext3 1M 100M
+(parted) set 1 boot on
+(parted) mkpart primary ext3 100M 20G
+(parted) mkpart primary linux-swap 20G 24G
+(parted) mkpart primary ext3 24G 100%
+
+如果新创建了 UEFI 系统分区，需要格式化成 fat32 或 vfat32 文件系统，否则无法启动。Windows 双启动系统不要格式化。
+ mkfs.vfat -F32 /dev/sdxY
+建议用 ext4 文件系统格式化其它分区：
+# mkfs.ext4 /dev/sdxY
+若您分了一个 swap 区，也不要忘了格式化并启用它：
+# mkswap /dev/sdaX
+# swapon /dev/sdaX
+
+2、 选择安装镜像
+curl -L https://www.archlinux.org/mirrorlist/?country=CN&protocol=http&protocol=https&ip_version=4&use_mirror_status=on -o mirrorlist 
+curl -L https://www.archlinux.org/mirrorlist/?country=CN&protocol=http&ip_version=4 -o /etc/pacman.d/mirrorlist
+pacman -Syy
+
+3、 安装基本系统
+mount /dev/sdax /mnt 
+pacstrap -i /mnt base base-devel
+genfstab -U -p /mnt >> /mnt/etc/fstab
+nano /mnt/etc/fstab
+arch-chroot /mnt /bin/bash
+nano /etc/locale.gen
+en_US.UTF-8 UTF-8
+zh_CN.UTF-8 UTF-8
+zh_TW.UTF-8 UTF-8
+locale-gen
+ echo LANG=en_US.UTF-8 > /etc/locale.conf
+ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+hwclock --systohc --utc
+echo myhostname > /etc/hostname
+bios /mbr
+pacman -S grub 
+grub-install --target=i386-pc --recheck /dev/sda 
+         pacman -S os-prober
+grub-mkconfig -o /boot/grub/grub.cfg
+
+UEFI/gpt
+pacman -S dosfstools efibootmgr
+
+
+
+pacman -S dbus xorg-server xorg-server-utils xorg-utils xorg-xinit slim openbox lxterminal wqy-zenhei leafpad xf86-video-nouveau
+安的是 NVIDIA的显卡,所以最后是xf86-video-nouveau；如果是ATI显卡的话，要安xf86-video-ati；虚拟机就执行xf86-video-vesa。

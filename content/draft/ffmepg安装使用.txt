@@ -1,0 +1,31 @@
+http://www.deb-multimedia.org/
+For wheezy (stable) amd64, armel, armhf, i386, ia64, kfreebsd-amd64, kfreebsd-i386, mips, mipsel, powerpc and sparc packages
+add in your /etc/apt/sources.list
+non-free is for i386 and amd64 arches only.
+deb http://www.deb-multimedia.org wheezy main non-free
+or
+deb ftp://ftp.deb-multimedia.org wheezy main non-free
+or
+deb http://www.deb-multimedia.org stable main non-free
+or
+deb ftp://ftp.deb-multimedia.org stable main non-free
+
+
+
+apt-get install deb-multimedia-keyring
+apt-get update
+apt-get dist-upgrade
+
+
+for /f "eol=;delims=;" %i in ('dir /b') do ffmpeg -i "%~ni.flv" -ar 22050 "..\output\%~ni.mp4"
+
+一、通过ffmpeg转换mkv文件
+ffmpeg.exe -i input.mkv -y -vcodec copy -acodec copy output.mp4
+for %%i in (*.mkv) do ffmpeg.exe -i "%%i" -vcodec copy -acodec copy "%%~ni.mp4"
+
+二、通过FlvExtract + mp4box转换mkv文件
+FLVExtractCL.exe -a -v input.flv
+mp4box -add input.264 -add input.aac -new output.mp4
+
+三、通过mp4box无损连接mp4文件
+mp4box -cat a.mp4 -cat b.mp4 -new total.mp4

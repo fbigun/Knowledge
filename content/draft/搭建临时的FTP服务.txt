@@ -1,0 +1,52 @@
+搭建临时的FTP服务
+前面已经提到了可以直接使用 Sftp 来访问 Vps，如果需要临时的搭建Ftp，则按下面的指南进行。
+
+下载 pyftpdlib 库
+在 Putty 使用如下命令，下载 pyftpdlib 库并解压缩。
+
+cd /root
+wget http://pyftpdlib.googlecode.com/files/pyftpdlib-0.7.0.tar.gz
+tar xzvf pyftpdlib-0.7.0.tar.gz
+解压缩完毕后，我们可以临时开启ftp了：
+
+开启匿名ftp服务
+开启匿名ftp服务，主目录为 /var/www ；默认是21端口；-d 是设置主目录。
+
+cd /root/pyftpdlib-0.7.0/
+python -m pyftpdlib.ftpserver -d /var/www
+运行该命令后，客户端就可以使用 anonymous 帐号登录，下载了。
+
+按 Ctrl+C 结束 Ftp 服务器。
+
+开启允许写入ftp服务
+添加 -w 参数即可允许写入，不可以长时间开，小心被其它人删除数据。
+
+cd /root/pyftpdlib-0.7.0/
+python -m pyftpdlib.ftpserver -w -d /var/www 
+运行该命令后，客户端就可以使用匿名帐号登录，下载和上传了。
+
+登录ftp的账号
+IP： VPS服务器的IP 用户名： anonymous 密码：随便输入一个邮箱即可。
+
+关闭ftp服务
+直接关闭终端就会退出ftp服务，如果不想关闭可以同时按下 ctrl+c 退出ftp服务。
+
+
+==================================================================
+
+    今天要传输一个文件到另外的一台电脑上,所以需要一个FTP服务器,因为只要使用一次,所以使用vsftpd就有些大材小用,不过我找到了使用Python架设一个临时FTP服务器的办法.
+    首先安装pyftpdlib:
+?
+1
+sudo apt-get install python-pyftpdlib
+    然后在要共享的目录下执行一下命令:
+?
+1
+sudo python -m pyftpdlib.ftpserver
+好了,一个FTP服务器就成功架设起来了,这个FTP服务器帐号为anonymous,也就是匿名.
+ps:这里附上用Python架设http服务器的方法:
+python2.x:
+python -m SimpleHTTPServer
+
+python 3.x:
+python3 -m http.server

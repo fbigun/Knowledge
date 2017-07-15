@@ -1,0 +1,188 @@
+﻿# 安装并配置 Samba
+#
+# 首先安装 samba
+# 备份配置文件，备份是个好习惯
+# sudo cp /etc/samba/smb.conf /etc/samba/smb.conf.bak
+#
+# 编辑配置文件 sudo vim /etc/samba/smb.conf , 做如下修改
+#============================= Configuration start ============================
+#============================== Global parameters =============================
+# 1. 先设定好samba服务器全局的参数，对整个服务器有效
+[global]
+        # 与主机名称有关的设定信息
+        workgroup     = WORKGROUP
+# 语法：workgtoup = <工作组群>;
+# 预设：workgroup = MYGROUP
+# 说明：设定 Samba Server 的工作组
+# 例：workgroup = workgroup 和WIN2000S设为一个组，可在网上邻居可中看到共享。
+        netbios name  = Samba
+# 设置Samba服务器NetBIOS名称，默认使用该服务器的DNS名称的第一部分。
+        server string = This is samba server share
+# 语法：server string = <说明>;
+# 预设：sarver string = Samba Server
+# 说明：设定 Samba Server 的注释
+# 其他：支持变量 t%-访问时间 I%-客户端IP m%-客户端主机名 M%-客户端域名 S%-客户端用户名
+# 例：server string = this is a Samba Server 设定出现在Windows网上邻居的 Samba Server 注释为 this is a Samba Server
+
+        # 与语系方面有关的设定项目喔，为何如此设定请参考前面的说明
+        unix charset    = utf8
+        display charset = utf8
+        dos charset     = cp936
+# display charset = 服务器的显示编码，一般与 unix charset 相同
+# unix charset = linux服务器上面所用的编码
+# dos charset = Windows 用户端的编码
+
+        # 与登录档有关的设定项目，注意参数 (%m)
+        log file = /var/log/samba/log.%m
+# 语法：log file = <日志文件>;
+# 预设：log file = /var/log/samba/%m.log
+# 说明：设定 samba server 日志文件的储存位置和文件名(%m代表客户端主机名)
+        max log size = 50
+# 语法：max log size = <??KB>;
+# 预设：max log size = 0
+# 说明：设定日子文件的最大容量，单位KB 这里的预设值0代表不做限制。
+
+        # 这裡才是与密码有关的设定项目哩！
+        security = user
+# 语法：security = <等级>;
+# 预设：security = user
+# 说明：设定访问 samba server 的安全级别共有四种：
+# share---不需要提供用户名和密码。
+# user----需要提供用户名和密码，而且身份验证由 samba server 负责。
+        passdb backend = tdbsam
+# 语法：passdb backend = <smbpasswd文件存储方式>
+# 预设：passdb backend = tdbsam
+# 说明：选项smbpasswd、tdbsam、ldapsam、mysql。一般不用修改，除非想使用其它方式
+        host allow = 192.168. 127.
+# 语法：hosts aoolw = <IP地址>; ...
+# 预设：; host allow = 192.168.1. 192.168.2. 127.
+# 说明：限制允许连接到 Samba Server 的机器，多个参数以空格隔开
+# 例：hosts allow = 192.168.1. 192.168.0.1 表示允许 192.168.1 网段的机器网址为 192.168.0.1 的机器连接到自己的 samba server
+        #guest account = guest
+# 语法：guert account = <帐户名称>;
+# 预设：guert account = pcguest
+# 说明：设定访问 samba server 的来宾帐户(即访问时不用输入用户名和密码的帐户)，若设为pcguest的话则为默认为"nobody"用户。
+# 例：guert account = andy 设定设定访问 samba server 的来宾帐户以andy用户登陆，则此登陆帐户享有andy用户的所有权限。
+        #password level = 8
+# 语法：password level = <位数>;
+# username level = <位数>;
+# 预设：password level = 8
+        #username level = 8
+# username level = 8
+# 说明：设定用户名和密码的位数，预设为8位字符。
+        #encrypt passwords = yes
+# 语法：encrypt passwords = <yes/no>
+# 预设：encrypt passwords = yse
+# 说明：设定是否对samba的密码加密。
+        #smb passwd file = /etc/samba/smbpasswd
+# 语法：smb passwd file = <密码文件>;
+# 预设：smb passwd file = /etc/samba/smbpasswd
+# 说明：设定samba的密码文件。
+
+        #1、修改一下印表机的载入方式，不要载入啦！
+        load printers   = no
+        #2、得要修改 load printers 的设定，然后新增几个资料
+        #load printers = yes
+        # 可支援来自 Windows 用户的列印工作
+        #cups options  = raw
+        # 下面这两个在告知使用 CUPS 列印系统
+        #printcap name = cups
+# 语法：printcap name = <打印机配置文件>;
+# 预设：printcap name = /etc/printcap
+# 说明：设定 samba srever 打印机的配置文件
+# 例：默认设定 samba srever 参考 /etc/printcap 档的打印机设定
+        #printing      = cups
+# 语法：printing = <打印机类型>;
+# 预设：printing = lprng
+# 说明：设定 samba server 打印机所使用的类型，为目前所支持的类型
+
+#============================== Share Definitions =============================
+# 2. 打印机方面设定：
+# 印表机一定要写 printers 喔！
+#[printers]
+         # 注释说明
+         #comment = All Printers
+         # 预设把来自 samba 的列印工作暂时放置的伫列
+         #path    = /var/spool/samba<==
+         # 不被外人所浏览啦！有权限才可浏览
+         #browseable = no
+         # 与底下两个都不许访客来源与写入(非档桉系统)
+         #guest ok   = no
+         # 是否允许可写共享当与read only发生冲突时，无视read only
+         #writable   = no
+         # 是否允许打印
+         #printable  = yes
+
+# 3. 资源分享方面设定
+[homes]
+        comment        = Home Directories
+        browseable     = no
+        writable       = yes
+        create mode    = 0664
+        directory mode = 0775
+        valid users    = %S
+# 使用者本身的"家"目录，当使用者以samba使用者身份登入samba server 后，samba server 底下会看到自己的家目录，目录名称是使用者自己的帐号。
+[public]
+        comment    = smbuser's public
+        path       = /root/download
+        browseable = yes
+        writable   = yes
+        write list = @users
+[temp]
+        comment    = Temporary file space
+        path       = /tmp
+        writable   = yes
+        browseable = yes
+        guest ok   = yes
+
+# 每当你修改这个文件，你应该运行命令“testparm”来检查任何基本语法错误
+#
+# [分享的资源名称]
+# <指令1>; = (参数)
+# <指令2>; = (参数)
+#
+# 要提供分享资源时，须先把欲分享的资源以 [ ] 符号括住，底下通常会带指令和参数来表示此资源的设定和存取权限等，详情如下：
+#
+# comment---------注释说明
+# path------------分享资源的完整路径名称，除了路径要正确外，目录的权限也要设对
+# browseable------是yes/否no在浏览资源中显示共享目录，若为否则必须指定共享路径才能存取
+# printable-------是yes/否no允许打印
+# hide dot ftles--是yes/否no隐藏隐藏文件
+# public----------是yes/否no公开共享，若为否则进行身份验证(只有当security = share 时此项才起作用)
+# guest ok--------是yes/否no公开共享，若为否则进行身份验证(只有当security = share 时此项才起作用)
+# read only-------是yes/否no以只读方式共享当与writable发生冲突时也writable为准
+# writable--------是yes/否no不以只读方式共享当与read only发生冲突时，无视read only
+# vaild users-----设定只有此名单内的用户才能访问共享资源(拒绝优先)(用户名/@组名)
+# invalid users---设定只有此名单内的用户不能访问共享资源(拒绝优先)(用户名/@组名)
+# read list-------设定此名单内的成员为只读(用户名/@组名)
+# write list------若设定为只读时，则只有此设定的名单内的成员才可作写入动作(用户名/@组名)
+# create mask-----建立文件时所给的权限
+# directory mask--建立目录时所给的权限
+# force group-----指定存取资源时须以此设定的群组使用者进入才能存取(用户名/@组名)
+# force user------指定存取资源时须以此设定的使用者进入才能存取(用户名/@组名)
+# allow hosts-----设定只有此网段/IP的用户才能访问共享资源
+# allwo hosts = 网段 except IP
+# deny hosts------设定只有此网段/IP的用户不能访问共享资源
+# allow hosts=本网段指定IP指定IP
+# deny hosts=指定IP本网段指定IP
+#
+#============================== Configuration end =============================
+# 给 samba 添加用户并创建密码（登陆 samba 用的），其中的用户必须是 linux 已存在的用户
+# useradd samba_user
+# usermod -a -G sambashare your_username
+# pdbedit -a -u samba_user
+# smbpasswd samba_user
+# pdbedit命令常用参数：
+# pdbedit –a username：新建Samba账户。
+# pdbedit –x username：删除Samba账户。
+# pdbedit –L：列出Samba用户列表，读取passdb.tdb数据库文件。
+# pdbedit –Lv：列出Samba用户列表的详细信息。
+# pdbedit –c “[D]” –u username：暂停该Samba用户的账号。
+# pdbedit –c “[]” –u username：恢复该Samba用户的账号。
+#
+# 配置好后，使用如下命令重启 samba 服务
+# systemctl start smbd.service nmbd.service
+# 到这里，各个设备应该都可以访问了，大功告成？
+#
+# linux下挂载此分享（可用 smbclient -L [raspberrypi ip] 查看树莓派分享的资源）
+# sudo mount -t cifs //192.168.1.2/nas /mnt -o username=pi,password=raspberry

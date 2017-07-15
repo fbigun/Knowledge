@@ -1,0 +1,5 @@
+1. 将 u 盘插入电脑，在 windows 能够识别后，进入 VirtualBox 的选定要加载的虚拟机，选择设置——》选择 usb 设备项 
+2. 选择右边的第一或者是第二个图标，增加一个新的筛选器，第一个图标是增加一个空的筛选器，能够加载任何的 usb 设备。第二图标是加载 host 中 usb 列表的设备。
+3. 增加筛选器后，通过 windows 的安全删除硬件方式卸载 usb 。
+4. 启动 guest ，进入 ubuntu ，此时应该会提示 windows 发现了 virtual box usb 驱动，指定驱动为 virtual box 安装目录 C:/Program Files/Oracle/VirtualBox/drivers/USB/device 下，然后进行安装。
+5. 在启动完毕后，在保证 guest 系统选中的情况下，插入 u 盘，如果是第一次使用，在虚拟机的菜单的设备——》分配 usb 设备中，选择要加载的 usb ，然后虚拟机的右下角的 usb 图标会闪动，如果设置正确， ubuntu 上就出现你的 u 盘的图标，然后就可以访问了。

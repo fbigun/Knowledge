@@ -1,0 +1,8 @@
+安装
+pip install youtube_dl
+
+apt-get install ffmpeg
+
+youtube的常规使用方法
+youtube-dl -F youtubeUrl
+youtube-dl --prefer-ffmpeg -f bestvideo+bestaudio youtubeUrl

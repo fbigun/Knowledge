@@ -1,0 +1,18 @@
+﻿开机自动挂载硬盘
+
+先挂载一下硬盘，修改权限，要不然我们的 pi 可是写不了的
+ext4 格式是可以记录权限信息的，所以修改一次下次挂载 pi 就可以写了
+ntfs 格式的话，挂载的时候指定 uid=pi,gid=pi 就可以了，直接看第2步
+
+mkdir /home/pi/nas-data
+sudo mount /dev/sda1 /home/pi/nas-data
+sudo chown pi:pi /home/pi/nas-data
+
+查看硬盘的 uuid
+
+$ sudo blkid
+/dev/sda1: UUID="d5a3d30a-d2e7-4b12-bb31-b4439c5db200" TYPE="ext4"
+编辑 sudo vim /etc/fstab 文件，在末尾加入以下内容
+UUID=d5a3d30a-d2e7-4b12-bb31-b4439c5db200 /home/pi/nas-data ext4 defaults 0 2
+如果是 ntfs 格式，如下
+UUID=588650B08650907C /home/pi/nas-data ntfs gid=pi,uid=pi,dmask=002,fmask=113 0 0

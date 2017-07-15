@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+#
+# 开机启动文件 路径 /etc/rc.d/rc.local
+# chmod +x /etc/rc.d/rc.local
+
+su -u root -c "aria2c"
+

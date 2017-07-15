@@ -1,0 +1,56 @@
+useradd -D -p hyan1314 puller
+useradd -M -p hyan1314 proxyer
+useradd -M -p hyan1314 -g puller public
+
+echo 'Server = http://mirrors.ustc.edu.cn/archlinuxarm/$arch/$repo' >\
+/etc/pacman.d/mirrorlist
+
+echo "CleanMethod = KeepCurrent" >> /etc/pacman.conf
+
+echo "nameserver 223.5.5.5" > /etc/resolv.conf
+chattr +i /etc/resolv.conf
+
+pacman -Syy && pacman -Syu
+pacman -S --noconfirm python python-pip aria2 samba
+
+cat > /usr/lib/systemd/system/rc-local.service << EFO
+[Unit]
+Description=/etc/rc.local Compatibility
+After=network.target
+ 
+[Service]
+Type=forking
+ExecStart=/etc/rc.local start
+TimeoutSec=0
+RemainAfterExit=yes
+SysVStartPriority=99
+
+[Install]
+WantedBy=multi-user.target
+EFO
+
+cat > /etc/rc.local << EFO
+#!/usr/bin/env sh
+#
+# 开机启动文件 路径 /etc/rc.d/rc.local
+# chmod +x /etc/rc.local
+
+su -u root -c "aria2c > /dev/null 2>&1 &"
+EFO
+
+chmod +x /etc/rc.local
+
+systemctl enable smbd
+systemctl enable nmbd
+systemctl enable rc-local
+
+
+# 配置xware下载目录设定
+
+cat > /path/to/cfg/thunder_mounts.cfg <<EFO
+avaliable_mount_path_pattern
+{
+/path/to/usb1
+}
+EFO
+

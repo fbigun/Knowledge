@@ -1,0 +1,8 @@
+wifi-menu
+pacman -S dia wpa_supplicant
+cp /etc/netctl/example/wpa-static /etc/netctl/
+netctl start wpa-wifi
+netctl enable wpa-wifi
+
+
+mkfs.vfat -F 32 /dev/sdb1
